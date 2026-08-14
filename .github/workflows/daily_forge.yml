@@ -41,10 +41,13 @@ jobs:
           GITHUB_REPO: ${{ vars.GITHUB_REPO || 'Aayush-pixel29/leetcode' }}
           GITHUB_BRANCH: ${{ vars.GITHUB_BRANCH || 'main' }}
           LEETCODE_USERNAME: ${{ vars.LEETCODE_USERNAME || 'pYwmntvkNk' }}
-          LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'openai' }}
-          LLM_MODEL: ${{ vars.LLM_MODEL || 'gpt-4o-mini' }}
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'gemini' }}
+          LLM_MODEL: ${{ vars.LLM_MODEL || 'gemini-2.5-flash' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           SLUG: ${{ github.event.inputs.slug }}
         run: |

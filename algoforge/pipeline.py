@@ -10,6 +10,7 @@ from algoforge.committer import push_forge_result
 from algoforge.config import Settings, get_settings
 from algoforge.ingestion import fetch_for_pipeline, fetch_problem_by_slug
 from algoforge.models import ForgeResult
+from algoforge.notifications import send_daily_reminder
 
 log = logging.getLogger(__name__)
 
@@ -55,4 +56,6 @@ def run_pipeline(
     if result.github_paths:
         log.info("  GitHub : %s", ', '.join(result.github_paths))
     log.info("=" * 60)
+    
+    send_daily_reminder(result, settings=settings)
     return result

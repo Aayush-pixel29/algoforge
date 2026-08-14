@@ -17,7 +17,7 @@ Learner profile: [leetcode.com/u/pYwmntvkNk](https://leetcode.com/u/pYwmntvkNk/)
 │  ┌──────────────┐   ┌──────────────────────────┐   ┌─────────┐ │
 │  │ 1. Scout     │──▶│ 2. Brain (CrewAI)        │──▶│ 3. VCS  │ │
 │  │              │   │                          │   │         │ │
-│  │ LeetCode GQL │   │ Solver → Tutor → Reviewer│   │ PyGithub│ │
+│  │ LeetCode GQL │   │ Master Agent (1-pass)    │   │ PyGithub│ │
 │  │ + profile    │   │ optimized code + README  │   │ streak  │ │
 │  │ Codeforces*  │   │ + 5 production examples  │   │ repo    │ │
 │  └──────────────┘   └──────────────────────────┘   └─────────┘ │
@@ -31,7 +31,7 @@ Learner profile: [leetcode.com/u/pYwmntvkNk](https://leetcode.com/u/pYwmntvkNk/)
 | Module | Persona | Job |
 |--------|---------|-----|
 | `ingestion/` | **Scout** | Daily challenge via GraphQL; optional public profile `@pYwmntvkNk` |
-| `brain/` | **Solver / Tutor / Reviewer** | Optimal code → teaching README with 5 real-world examples → polish |
+| `brain/` | **Master Agent** | Optimal code → teaching README with 5 real-world examples → polish |
 | `committer/` | **Committer** | Upsert `solution.py` + `README.md` into `Aayush-pixel29/leetcode` |
 | `artifacts.py` | — | Always write a local pack under `output/` |
 
@@ -181,7 +181,7 @@ Actions runners don't have Ollama — use OpenAI/Anthropic in CI.
 
 - [x] LeetCode daily GraphQL scout
 - [x] Profile-aware config (`pYwmntvkNk`)
-- [x] Solver → Tutor → Reviewer crew
+- [x] Optimized single-pass Master Agent crew
 - [x] GitHub streak committer
 - [x] GitHub Actions schedule
 - [ ] Codeforces full statement + contest mode

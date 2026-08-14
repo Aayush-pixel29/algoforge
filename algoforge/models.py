@@ -26,7 +26,7 @@ class Problem:
     topics: list[str] = field(default_factory=list)
     description_html: str = ""
     description_text: str = ""
-    python_template: str = ""
+    templates: dict[str, str] = field(default_factory=dict)
     snippets: list[CodeSnippet] = field(default_factory=list)
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -61,15 +61,18 @@ class Problem:
 
     def to_agent_prompt(self) -> str:
         topics = ", ".join(self.topics) if self.topics else "N/A"
-        return (
+        base = (
             f"Source: {self.source}\n"
             f"Title: {self.problem_id}. {self.title}\n"
             f"Difficulty: {self.difficulty}\n"
             f"Topics: {topics}\n"
             f"URL: {self.url}\n\n"
             f"Description:\n{self.description_text}\n\n"
-            f"Starting Code Template (Python3):\n```python\n{self.python_template}\n```"
+            f"Starting Code Templates:\n"
         )
+        for lang, code in self.templates.items():
+            base += f"```{lang}\n{code}\n```\n\n"
+        return base
 
     def crew_inputs(self) -> dict[str, str]:
         return {
@@ -86,7 +89,7 @@ class ForgeResult:
     """Artifacts produced by the multi-agent brain."""
 
     problem: Problem
-    solution_code: str
     readme_markdown: str
+    solutions: dict[str, str] = field(default_factory=dict)
     local_dir: str | None = None
     github_paths: list[str] = field(default_factory=list)

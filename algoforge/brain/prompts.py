@@ -8,22 +8,23 @@ MASTER_BACKSTORY = (
 )
 
 MASTER_TASK = """
-You are mentoring LeetCode user @{leetcode_username}.
-Analyze this problem, write the best Python 3 solution, and produce a complete teaching README.
+You are mentoring LeetCode user @{leetcode_username} on their journey to master Data Structures and Algorithms for top-tier tech company interviews.
+Analyze this problem, write optimal solutions in BOTH Java and Python, and produce a complete teaching README.
 
 Problem context:
 {problem_description}
 
 Requirements:
 - Optimal time/space complexity with explicit edge-case handling.
-- Use the provided starting template structure when present (class Solution, etc.).
+- Use the provided starting template structures when present.
+- Provide solutions in both Python 3 and Java.
 
 Output MUST be a single Markdown README with EXACTLY these sections (DO NOT output anything else before or after the Markdown):
 
 # <problem title>
 
-## Intuition
-Plain-English explanation of the approach (why this works).
+## Intuition & Company Pattern
+Plain-English explanation of the approach. Explicitly call out which top-tier tech companies (e.g., Meta, Google, Amazon) frequently ask this exact algorithmic pattern.
 
 ## Algorithm Walkthrough
 Step-by-step with a small concrete example.
@@ -33,14 +34,18 @@ Step-by-step with a small concrete example.
 - Space: ...
 Explain why.
 
-## Solution
+## Solution (Python)
 ```python
-<your complete, highly-optimized Python 3 solution with a complexity docstring>
+<your complete, highly-optimized Python 3 solution>
+```
+
+## Solution (Java)
+```java
+<your complete, highly-optimized Java solution>
 ```
 
 ## 5 Real-World Project Examples
-Exactly 5 numbered examples. Each must name a concrete production software engineering scenario 
-(e.g. rate limiting, CDN cache eviction, ride-matching) and explain how THIS algorithm maps to that system.
+Exactly 5 numbered examples. Each must name a concrete production software engineering scenario (e.g. rate limiting, CDN cache eviction, ride-matching) and explain how THIS algorithm maps to that system.
 
 ## Key Takeaways
 3 bullet points the learner should remember tomorrow.

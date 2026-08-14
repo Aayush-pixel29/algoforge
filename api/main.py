@@ -166,6 +166,51 @@ async def scout(slug: str | None = None):
     }
 
 
+from algoforge.ingestion.codeforces import fetch_problem as fetch_cf
+from crewai import Agent, Task, Crew
+from algoforge.brain.llm import build_llm
+
+@app.get("/api/phase2/codeforces")
+async def scout_codeforces(contest_id: int, index: str):
+    """Phase 2: Scout a Codeforces problem via public API."""
+    try:
+        problem = await asyncio.to_thread(fetch_cf, contest_id, index.upper())
+        return {"problem": _problem_dict(problem)}
+    except Exception as e:
+        raise HTTPException(502, str(e)) from e
+
+class ResearchRequest(BaseModel):
+    problem_id: str
+    title: str
+
+@app.post("/api/phase2/research")
+async def run_research_agent(req: ResearchRequest):
+    """Phase 2: Deploy a Research Sub-Agent to analyze the problem constraints."""
+    s = get_settings()
+    try:
+        llm = build_llm(s)
+        researcher = Agent(
+            role="Algorithm Constraint Researcher",
+            goal="Analyze the problem title/ID and outline potential edge cases or constraints to watch out for.",
+            backstory="You are a meticulous competitive programmer who always analyzes constraints before writing any code.",
+            llm=llm,
+            verbose=False
+        )
+        task = Task(
+            description=f"Analyze Codeforces problem {req.problem_id}: {req.title}. List 3 potential edge cases or constraints.",
+            expected_output="A bulleted list of 3 edge cases.",
+            agent=researcher
+        )
+        crew = Crew(agents=[researcher], tasks=[task], verbose=False)
+        result = await asyncio.to_thread(crew.kickoff)
+        out = getattr(result, "raw", str(result))
+        return {"response": f"[Agent Output]:\n{out}"}
+    except Exception as e:
+        log.exception("Research agent failed")
+        raise HTTPException(500, f"Agent failed: {e}")
+
+
+
 @app.post("/api/forge")
 async def start_forge(body: ForgeRequest, _auth=Depends(require_auth)):
     job_id = uuid.uuid4().hex[:12]
@@ -208,7 +253,7 @@ async def _run_job(job_id: str, slug: str | None, dry_run: bool) -> None:
             "folder": result.problem.slug_folder,
             "local_dir": result.local_dir,
             "github_paths": paths,
-            "solution_code": result.solution_code,
+            "solutions": result.solutions,
             "readme_markdown": result.readme_markdown,
             "problem": _problem_dict(result.problem),
         }
@@ -279,13 +324,18 @@ async def get_artifact(folder: str):
     if not root.is_dir():
         raise HTTPException(404, "not found")
     readme = root / "README.md"
-    py = next(root.glob("*.py"), None)
     problem = root / "problem.txt"
+    
+    solutions = {}
+    for ext, lang in [("py", "python"), ("java", "java")]:
+        f = next(root.glob(f"*.{ext}"), None)
+        if f:
+            solutions[lang] = {"name": f.name, "code": f.read_text(encoding="utf-8")}
+            
     return {
         "folder": folder,
         "readme_markdown": readme.read_text(encoding="utf-8") if readme.exists() else "",
-        "solution_code": py.read_text(encoding="utf-8") if py else "",
-        "solution_name": py.name if py else None,
+        "solutions": solutions,
         "problem_text": problem.read_text(encoding="utf-8") if problem.exists() else "",
     }
 

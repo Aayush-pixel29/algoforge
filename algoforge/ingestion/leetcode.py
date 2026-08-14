@@ -125,7 +125,14 @@ def _question_to_problem(question: dict, *, date_str: str, link: str) -> Problem
         CodeSnippet(lang=s["lang"], lang_slug=s["langSlug"], code=s["code"])
         for s in question.get("codeSnippets") or []
     ]
-    python = next((s.code for s in snippets if s.lang_slug == "python3"), "")
+    
+    templates = {}
+    for s in snippets:
+        if s.lang_slug == "python3":
+            templates["python"] = s.code
+        elif s.lang_slug == "java":
+            templates["java"] = s.code
+
     slug = question.get("titleSlug") or ""
     url = link if link.startswith("http") else f"https://leetcode.com{link}"
     if not link and slug:
@@ -141,7 +148,7 @@ def _question_to_problem(question: dict, *, date_str: str, link: str) -> Problem
         topics=[t["name"] for t in question.get("topicTags") or []],
         description_html=question.get("content") or "",
         description_text=_html_to_text(question.get("content") or ""),
-        python_template=python,
+        templates=templates,
         snippets=snippets,
         extra={"title_slug": slug},
     )

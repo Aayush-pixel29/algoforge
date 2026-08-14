@@ -22,14 +22,16 @@ def write_local_artifacts(result: ForgeResult, settings: Settings | None = None)
 
     folder.mkdir(parents=True, exist_ok=True)
 
-    solution_path = folder / result.problem.solution_filename
     readme_path = folder / "README.md"
     meta_path = folder / "problem.txt"
 
-    solution_path.write_text(
-        result.solution_code if result.solution_code.endswith("\n") else result.solution_code + "\n",
-        encoding="utf-8",
-    )
+    for lang, code in result.solutions.items():
+        ext = "py" if lang == "python" else "java"
+        sol_name = "Solution.java" if ext == "java" else f"{result.problem.slug_folder}.{ext}"
+        (folder / sol_name).write_text(
+            code if code.endswith("\n") else code + "\n",
+            encoding="utf-8",
+        )
     readme_path.write_text(
         result.readme_markdown if result.readme_markdown.endswith("\n") else result.readme_markdown + "\n",
         encoding="utf-8",

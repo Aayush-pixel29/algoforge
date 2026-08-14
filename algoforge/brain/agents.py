@@ -15,17 +15,25 @@ from algoforge.models import ForgeResult, Problem
 log = logging.getLogger(__name__)
 
 
-def _strip_code_fences(text: str) -> str:
-    """Extract Python code from markdown fences, handling edge cases."""
+def _extract_solutions(text: str) -> dict[str, str]:
+    """Extract Python and Java code from markdown fences."""
     text = (text or "").strip()
-    for pattern in [
-        r"```\s*(?:python3?|py)\s*\n([\s\S]*?)```",
-        r"```\s*\n([\s\S]*?)```",
-    ]:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(1).strip()
-    return ""
+    solutions = {}
+    
+    py_match = re.search(r"```(?:python3?|py)\s*\n([\s\S]*?)```", text, re.IGNORECASE)
+    if py_match:
+        solutions["python"] = py_match.group(1).strip()
+        
+    java_match = re.search(r"```java\s*\n([\s\S]*?)```", text, re.IGNORECASE)
+    if java_match:
+        solutions["java"] = java_match.group(1).strip()
+        
+    if not solutions:
+        raise ValueError(
+            "Failed to extract code from the agent's markdown response. "
+            "The model did not output valid code fences. Pipeline halted."
+        )
+    return solutions
 
 
 def _task_text(task: Task) -> str:
@@ -73,7 +81,7 @@ def run_brain(problem: Problem, settings: Settings | None = None) -> ForgeResult
     )
 
     readme = _task_text(master_task).strip()
-    solution_code = _strip_code_fences(readme)
+    solutions = _extract_solutions(readme)
 
     log.info("Agent finished — solution + teaching notes ready.")
-    return ForgeResult(problem=problem, solution_code=solution_code, readme_markdown=readme)
+    return ForgeResult(problem=problem, solutions=solutions, readme_markdown=readme)

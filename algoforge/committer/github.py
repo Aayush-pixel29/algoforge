@@ -54,19 +54,43 @@ def push_forge_result(result: ForgeResult, settings: Settings | None = None) -> 
     branch = settings.github_branch
 
     folder = result.problem.slug_folder
-    solution_name = result.problem.solution_filename
-    solution_content = _ensure_newline(result.solution_code)
     readme_content = _ensure_newline(result.readme_markdown)
-
-    solution_path = f"{folder}/{solution_name}"
     readme_path = f"{folder}/README.md"
-
-    # Check if content is already up-to-date (idempotency)
-    sol_match = _content_matches(repo, solution_path, solution_content, branch)
     readme_match = _content_matches(repo, readme_path, readme_content, branch)
-    if sol_match and readme_match:
+
+    paths = [readme_path]
+    tree_elements = []
+    
+    if not readme_match:
+        tree_elements.append(
+            InputGitTreeElement(
+                path=readme_path,
+                mode="100644",
+                type="blob",
+                content=readme_content,
+            )
+        )
+
+    for lang, code in result.solutions.items():
+        ext = "py" if lang == "python" else "java"
+        solution_name = "Solution.java" if ext == "java" else f"{folder}.{ext}"
+        solution_path = f"{folder}/{solution_name}"
+        solution_content = _ensure_newline(code)
+        
+        paths.append(solution_path)
+        if not _content_matches(repo, solution_path, solution_content, branch):
+            tree_elements.append(
+                InputGitTreeElement(
+                    path=solution_path,
+                    mode="100644",
+                    type="blob",
+                    content=solution_content,
+                )
+            )
+
+    if not tree_elements:
         log.info("Content unchanged — skipping commit.")
-        return [solution_path, readme_path]
+        return paths
 
     # Atomic commit: create blobs + tree + commit
     commit_msg = (
@@ -79,26 +103,10 @@ def push_forge_result(result: ForgeResult, settings: Settings | None = None) -> 
     base_commit = repo.get_git_commit(base_sha)
     base_tree = base_commit.tree
 
-    tree_elements = [
-        InputGitTreeElement(
-            path=solution_path,
-            mode="100644",
-            type="blob",
-            content=solution_content,
-        ),
-        InputGitTreeElement(
-            path=readme_path,
-            mode="100644",
-            type="blob",
-            content=readme_content,
-        ),
-    ]
-
     new_tree = repo.create_git_tree(tree_elements, base_tree)
     new_commit = repo.create_git_commit(commit_msg, new_tree, [base_commit])
     ref.edit(new_commit.sha)
 
-    paths = [solution_path, readme_path]
     log.info("Atomic commit → https://github.com/%s/tree/%s/%s", settings.github_repo, branch, folder)
     result.github_paths = paths
     return paths

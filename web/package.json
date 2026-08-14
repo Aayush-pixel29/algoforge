@@ -9,10 +9,13 @@
     "preview": "vite preview --host 127.0.0.1 --port 5173"
   },
   "dependencies": {
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.18.2"
+    "react-router-dom": "^7.18.2",
+    "react-syntax-highlighter": "^16.1.1"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY")
     ollama_base_url: str = Field(default="http://localhost:11434", alias="OLLAMA_BASE_URL")
 
+    # Notifications
+    gmail_address: str | None = Field(default=None, alias="GMAIL_ADDRESS")
+    gmail_app_password: str | None = Field(default=None, alias="GMAIL_APP_PASSWORD")
+
     # Runtime
     dry_run: bool = Field(default=False, alias="DRY_RUN")
     output_dir: Path = Field(default=OUTPUT_DIR)
