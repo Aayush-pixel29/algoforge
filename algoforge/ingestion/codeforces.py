@@ -54,12 +54,14 @@ def fetch_problem(contest_id: int, index: str) -> Problem:
             f"Open the URL for the full statement: "
             f"https://codeforces.com/problemset/problem/{contest_id}/{index}"
         ),
-        python_template=(
-            "def solve():\n"
-            "    # TODO: implement\n"
-            "    pass\n\n"
-            "if __name__ == '__main__':\n"
-            "    solve()\n"
-        ),
+        templates={
+            "python": (
+                "def solve():\n"
+                "    # TODO: implement\n"
+                "    pass\n\n"
+                "if __name__ == '__main__':\n"
+                "    solve()\n"
+            )
+        },
         extra={"contest_id": contest_id, "index": index},
     )

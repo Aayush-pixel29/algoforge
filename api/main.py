@@ -79,7 +79,7 @@ def _problem_dict(p) -> dict:
         "url": p.url,
         "topics": p.topics,
         "description_text": p.description_text,
-        "python_template": p.python_template,
+        "python_template": p.templates.get("python", ""),
         "slug_folder": p.slug_folder,
         "title_slug": p.title_slug,
     }

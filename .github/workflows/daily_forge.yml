@@ -52,7 +52,7 @@ jobs:
           SLUG: ${{ github.event.inputs.slug }}
         run: |
           if [ -n "$SLUG" ]; then
-            python main.py --slug "$SLUG"
+            python -m algoforge.cli --slug "$SLUG"
           else
-            python main.py
+            python -m algoforge.cli
           fi

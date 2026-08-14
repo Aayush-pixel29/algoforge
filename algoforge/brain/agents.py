@@ -16,24 +16,43 @@ log = logging.getLogger(__name__)
 
 
 def _extract_solutions(text: str) -> dict[str, str]:
-    """Extract Python and Java code from markdown fences."""
+    """Extract Python and Java code from markdown fences with section-awareness and fallback."""
     text = (text or "").strip()
     solutions = {}
     
-    py_match = re.search(r"```(?:python3?|py)\s*\n([\s\S]*?)```", text, re.IGNORECASE)
-    if py_match:
-        solutions["python"] = py_match.group(1).strip()
-        
-    java_match = re.search(r"```java\s*\n([\s\S]*?)```", text, re.IGNORECASE)
-    if java_match:
-        solutions["java"] = java_match.group(1).strip()
-        
+    # 1. Look for Python under section header first, fallback to first python fence
+    py_section = re.search(
+        r"##\s+Solution[^\n]*?Python[^\n]*\s*```(?:python3?|py)\s*\n([\s\S]*?)```",
+        text,
+        re.IGNORECASE,
+    )
+    if py_section:
+        solutions["python"] = py_section.group(1).strip()
+    else:
+        py_match = re.search(r"```(?:python3?|py)\s*\n([\s\S]*?)```", text, re.IGNORECASE)
+        if py_match:
+            solutions["python"] = py_match.group(1).strip()
+            
+    # 2. Look for Java under section header first, fallback to first java fence
+    java_section = re.search(
+        r"##\s+Solution[^\n]*?Java[^\n]*\s*```java\s*\n([\s\S]*?)```",
+        text,
+        re.IGNORECASE,
+    )
+    if java_section:
+        solutions["java"] = java_section.group(1).strip()
+    else:
+        java_match = re.search(r"```java\s*\n([\s\S]*?)```", text, re.IGNORECASE)
+        if java_match:
+            solutions["java"] = java_match.group(1).strip()
+            
     if not solutions:
         raise ValueError(
             "Failed to extract code from the agent's markdown response. "
             "The model did not output valid code fences. Pipeline halted."
         )
     return solutions
+
 
 
 def _task_text(task: Task) -> str:
