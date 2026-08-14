@@ -1,0 +1,14 @@
+[project]
+name = "algoforge"
+version = "0.1.0"
+description = "Autonomous multi-agent pipeline: fetch daily algorithms, solve, teach, commit to GitHub."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Aayush" }]
+
+[project.scripts]
+algoforge = "algoforge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["algoforge*"]

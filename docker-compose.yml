@@ -1,0 +1,25 @@
+# AlgoForge — local Ollama via Docker Desktop
+# Usage:
+#   docker compose up -d
+#   docker exec -it algoforge-ollama ollama pull qwen2.5-coder:7b
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: algoforge-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    # Uncomment if you have an NVIDIA GPU + Docker GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  ollama_data:

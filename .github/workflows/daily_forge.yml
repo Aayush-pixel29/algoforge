@@ -1,0 +1,55 @@
+name: AlgoForge Daily
+
+on:
+  schedule:
+    # 02:30 UTC ≈ 08:00 IST
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Optional LeetCode title slug (blank = daily challenge)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Skip GitHub push"
+        required: false
+        default: "false"
+
+jobs:
+  forge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout AlgoForge
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run pipeline
+        env:
+          GITHUB_TOKEN: ${{ secrets.STREAK_GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ vars.GITHUB_REPO || 'Aayush-pixel29/leetcode' }}
+          GITHUB_BRANCH: ${{ vars.GITHUB_BRANCH || 'main' }}
+          LEETCODE_USERNAME: ${{ vars.LEETCODE_USERNAME || 'pYwmntvkNk' }}
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'openai' }}
+          LLM_MODEL: ${{ vars.LLM_MODEL || 'gpt-4o-mini' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          SLUG: ${{ github.event.inputs.slug }}
+        run: |
+          if [ -n "$SLUG" ]; then
+            python main.py --slug "$SLUG"
+          else
+            python main.py
+          fi
