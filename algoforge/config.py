@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     github_branch: str = Field(default="main", alias="GITHUB_BRANCH")
 
     # LLM
-    llm_provider: str = Field(default="ollama", alias="LLM_PROVIDER")  # ollama|openai|anthropic|gemini
+    llm_provider: str = Field(default="gemini", alias="LLM_PROVIDER")  # ollama|openai|anthropic|gemini
     llm_model: str = Field(default="llama3", alias="LLM_MODEL")
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
@@ -61,6 +61,11 @@ class Settings(BaseSettings):
     # Runtime
     dry_run: bool = Field(default=False, alias="DRY_RUN")
     output_dir: Path = Field(default=OUTPUT_DIR)
+    interview_date: str = Field(default="", alias="INTERVIEW_DATE")
+    target_companies: list[str] = Field(
+        default=["Google", "Amazon", "Microsoft", "Meta", "Flipkart", "Adobe"],
+        alias="TARGET_COMPANIES"
+    )
 
 
 @lru_cache

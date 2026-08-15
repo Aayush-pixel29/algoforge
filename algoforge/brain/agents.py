@@ -46,10 +46,10 @@ def _extract_solutions(text: str) -> dict[str, str]:
         if java_match:
             solutions["java"] = java_match.group(1).strip()
             
-    if not solutions:
+    if "python" not in solutions or "java" not in solutions:
         raise ValueError(
-            "Failed to extract code from the agent's markdown response. "
-            "The model did not output valid code fences. Pipeline halted."
+            f"Failed to extract both languages from the agent's markdown response. "
+            f"Only extracted {list(solutions)} — expected both python and java. Pipeline halted."
         )
     return solutions
 

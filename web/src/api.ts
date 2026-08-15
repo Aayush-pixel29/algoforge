@@ -1,4 +1,4 @@
-const BASE = "";
+const BASE = import.meta.env.VITE_API_URL || "";
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(`${BASE}${path}`, {
@@ -33,4 +33,22 @@ export type Problem = {
   description_text: string;
   slug_folder: string;
   title_slug: string;
+};
+
+export type StreakData = {
+  current_streak: number;
+  longest_streak: number;
+  calendar: { date: string; active: boolean }[];
+};
+
+export type AppSettings = {
+  leetcode_username: string;
+  github_repo: string;
+  github_branch: string;
+  llm_provider: string;
+  llm_model: string;
+  ollama_base_url: string;
+  dry_run: boolean;
+  github_token_set: boolean;
+  interview_date: string;
 };

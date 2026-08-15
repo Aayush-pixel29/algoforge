@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, type Health, type Problem } from "../api";
+import { StreakHeatmap } from "../components/StreakHeatmap";
+import { InterviewCountdown } from "../components/InterviewCountdown";
 
 export default function Dashboard() {
   const [health, setHealth] = useState<Health | null>(null);
@@ -37,7 +39,12 @@ export default function Dashboard() {
     <div className="grid">
       <div>
         <h1 style={{ margin: "0 0 0.25rem" }}>Mission Control</h1>
-        <p className="muted">Fetch today's challenge, forge with Ollama, push streak.</p>
+        <p className="muted">Fetch today's challenge, forge with Gemini, push streak.</p>
+      </div>
+
+      <div className="grid cols-2" style={{ gap: "1rem", marginBottom: "1rem", gridTemplateColumns: "2fr 1fr" }}>
+        <StreakHeatmap />
+        <InterviewCountdown />
       </div>
 
       {healthLoading ? (

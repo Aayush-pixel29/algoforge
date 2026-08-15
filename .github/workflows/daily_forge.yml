@@ -35,6 +35,9 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
+      - name: Run tests
+        run: pytest
+
       - name: Run pipeline
         env:
           GITHUB_TOKEN: ${{ secrets.STREAK_GITHUB_TOKEN }}

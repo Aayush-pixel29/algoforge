@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 app = FastAPI(title="AlgoForge", version="0.3.0")
 
 ALLOWED_ORIGINS = os.getenv(
-    "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,https://algoforge-dashboard-9i6.pages.dev"
 ).split(",")
 
 app.add_middleware(
@@ -142,6 +142,16 @@ async def health():
         "dry_run": s.dry_run,
     }
 
+class SettingsUpdate(BaseModel):
+    leetcode_username: str | None = None
+    github_repo: str | None = None
+    github_branch: str | None = None
+    llm_provider: str | None = None
+    llm_model: str | None = None
+    ollama_base_url: str | None = None
+    dry_run: bool | None = None
+    interview_date: str | None = None
+
 
 @app.get("/api/scout")
 async def scout(slug: str | None = None):
@@ -209,13 +219,23 @@ async def run_research_agent(req: ResearchRequest):
         log.exception("Research agent failed")
         raise HTTPException(500, f"Agent failed: {e}")
 
-
+import time
 
 @app.post("/api/forge")
 async def start_forge(body: ForgeRequest, _auth=Depends(require_auth)):
+    # Sweep old jobs
+    now = time.time()
+    to_delete = []
+    for jid, jdata in JOBS.items():
+        if jdata["status"] in ("done", "error"):
+            if now - jdata.get("created_at", now) > 7200:  # 2 hours
+                to_delete.append(jid)
+    for jid in to_delete:
+        del JOBS[jid]
+
     job_id = uuid.uuid4().hex[:12]
     clean_slug = sanitize_slug(body.slug)
-    JOBS[job_id] = {"status": "queued", "events": [], "result": None, "error": None}
+    JOBS[job_id] = {"status": "queued", "events": [], "result": None, "error": None, "created_at": time.time()}
     task = asyncio.create_task(_run_job(job_id, clean_slug, body.dry_run))
     JOBS[job_id]["task"] = task  # prevent GC of the task
     log.info("Forge job %s queued (slug=%s, dry_run=%s)", job_id, clean_slug, body.dry_run)
@@ -233,7 +253,7 @@ async def _run_job(job_id: str, slug: str | None, dry_run: bool) -> None:
             problem, _ = await asyncio.to_thread(fetch_for_pipeline, s)
         _emit(job_id, "scout", f"Got {problem.problem_id}. {problem.title}", problem=_problem_dict(problem))
 
-        _emit(job_id, "brain", "Solver → Tutor → Reviewer running (this can take a while)...")
+        _emit(job_id, "brain", "Master Agent solving + writing teaching notes...")
         result = await asyncio.to_thread(run_brain, problem, s)
         _emit(job_id, "brain", "Agents finished")
 
@@ -352,6 +372,7 @@ async def get_cfg():
         "ollama_base_url": s.ollama_base_url,
         "dry_run": s.dry_run,
         "github_token_set": bool(s.github_token),
+        "interview_date": getattr(s, "interview_date", None) or os.environ.get("INTERVIEW_DATE", ""),
     }
 
 
@@ -367,6 +388,7 @@ async def put_cfg(body: SettingsUpdate, _auth=Depends(require_auth)):
         "llm_model": "LLM_MODEL",
         "ollama_base_url": "OLLAMA_BASE_URL",
         "dry_run": "DRY_RUN",
+        "interview_date": "INTERVIEW_DATE",
     }
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if updates and env_path.exists():
@@ -391,3 +413,68 @@ async def put_cfg(body: SettingsUpdate, _auth=Depends(require_auth)):
         env_path.write_text("\n".join(out) + "\n", encoding="utf-8")
     get_settings.cache_clear()
     return await get_cfg()
+
+import time
+from datetime import datetime, timedelta, timezone
+
+@lru_cache(maxsize=1)
+def _fetch_streak_cached(ttl_hash: int):
+    s = get_settings()
+    if not s.github_token or not s.github_repo:
+        return {"current_streak": 0, "longest_streak": 0, "calendar": []}
+    
+    try:
+        from algoforge.committer.github import _client
+        g = _client(s)
+        repo = g.get_repo(s.github_repo)
+        since = datetime.now(timezone.utc) - timedelta(days=90)
+        commits = repo.get_commits(since=since, author=g.get_user().login)
+        
+        # Build set of days with commits
+        commit_days = set()
+        for c in commits:
+            commit_days.add(c.commit.author.date.strftime("%Y-%m-%d"))
+            
+        calendar = []
+        curr_date = since
+        end_date = datetime.now(timezone.utc)
+        current_streak = 0
+        longest_streak = 0
+        current_streak_active = True
+        
+        # Traverse backwards from today to find current streak
+        for i in range(90):
+            d_str = (end_date - timedelta(days=i)).strftime("%Y-%m-%d")
+            if d_str in commit_days:
+                if current_streak_active:
+                    current_streak += 1
+            else:
+                if i > 0: # missed a day (ignore today if not committed yet)
+                    current_streak_active = False
+                    
+        # Calculate longest streak
+        temp_streak = 0
+        for i in range(90, -1, -1):
+            d_str = (end_date - timedelta(days=i)).strftime("%Y-%m-%d")
+            active = d_str in commit_days
+            calendar.append({"date": d_str, "active": active})
+            if active:
+                temp_streak += 1
+                longest_streak = max(longest_streak, temp_streak)
+            else:
+                temp_streak = 0
+                
+        return {
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "calendar": calendar
+        }
+    except Exception as e:
+        log.error(f"Failed to fetch streak: {e}")
+        return {"current_streak": 0, "longest_streak": 0, "calendar": []}
+
+@app.get("/api/streak")
+async def get_streak():
+    """Returns 90-day GitHub commit streak for the user."""
+    # cache TTL of 1 hour (3600 seconds)
+    return await asyncio.to_thread(_fetch_streak_cached, int(time.time() / 3600))

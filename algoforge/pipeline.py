@@ -7,8 +7,11 @@ import logging
 from algoforge.artifacts import write_local_artifacts
 from algoforge.brain import run_brain
 from algoforge.committer import push_forge_result
+from algoforge.committer.github import get_curriculum_state
 from algoforge.config import Settings, get_settings
 from algoforge.ingestion import fetch_for_pipeline, fetch_problem_by_slug
+from algoforge.ingestion.codeforces import fetch_problem as fetch_cf
+from algoforge.scheduler import pick_todays_target
 from algoforge.models import ForgeResult
 from algoforge.notifications import send_daily_reminder
 
@@ -42,12 +45,33 @@ def run_pipeline(
     if slug:
         log.info("Fetching problem by slug: %s", slug)
         problem = fetch_problem_by_slug(slug, settings=settings)
+        state = None
     else:
-        problem, _profile = fetch_for_pipeline(settings=settings)
+        state = get_curriculum_state(settings=settings)
+        pick = pick_todays_target(settings, state)
+        if pick.source == "leetcode":
+            problem, _profile = fetch_for_pipeline(settings=settings)
+        elif pick.source == "codeforces":
+            problem = fetch_cf(pick.slug_or_ids["contest_id"], pick.slug_or_ids["index"])
+            if state:
+                state["cf_solved"].append(problem.problem_id)
+        else:  # company
+            problem = fetch_problem_by_slug(pick.slug_or_ids["slug"], settings=settings)
+            if state:
+                state["leetcode_company_solved"].append(problem.problem_id)
+                
+        # Advance curriculum if day threshold met
+        if state:
+            state["days_in_week"] += 1
+            if state["days_in_week"] >= 5:
+                state["week"] += 1
+                state["days_in_week"] = 0
+            import datetime
+            state["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d")
 
     result = run_brain(problem, settings=settings)
     write_local_artifacts(result, settings=settings)
-    push_forge_result(result, settings=settings)
+    push_forge_result(result, curriculum_state=state, settings=settings)
 
     log.info("=" * 60)
     log.info("  Pipeline complete.")

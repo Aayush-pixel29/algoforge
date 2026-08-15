@@ -7,6 +7,8 @@ import logging
 from github import Github, GithubException, InputGitTreeElement
 from github.Repository import Repository
 
+import json
+
 from algoforge.config import Settings, get_settings
 from algoforge.models import ForgeResult
 
@@ -35,8 +37,23 @@ def _content_matches(repo: Repository, path: str, content: str, branch: str) -> 
 def _ensure_newline(text: str) -> str:
     return text if text.endswith("\n") else text + "\n"
 
+def get_curriculum_state(settings: Settings | None = None) -> dict:
+    """Read the current curriculum state from the GitHub repo."""
+    settings = settings or get_settings()
+    if settings.dry_run or not settings.github_token:
+        return {"week": 1, "days_in_week": 0, "cf_solved": [], "leetcode_company_solved": [], "last_updated": ""}
+    try:
+        g = _client(settings)
+        repo = g.get_repo(settings.github_repo)
+        existing = repo.get_contents("state/curriculum_progress.json", ref=settings.github_branch)
+        if isinstance(existing, list):
+            return {"week": 1, "days_in_week": 0, "cf_solved": [], "leetcode_company_solved": [], "last_updated": ""}
+        return json.loads(existing.decoded_content.decode("utf-8"))
+    except GithubException:
+        return {"week": 1, "days_in_week": 0, "cf_solved": [], "leetcode_company_solved": [], "last_updated": ""}
 
-def push_forge_result(result: ForgeResult, settings: Settings | None = None) -> list[str]:
+
+def push_forge_result(result: ForgeResult, curriculum_state: dict | None = None, settings: Settings | None = None) -> list[str]:
     """
     Commit solution.py + README.md under dated folder in streak repo.
     Uses a single atomic tree commit instead of per-file commits.
@@ -85,6 +102,20 @@ def push_forge_result(result: ForgeResult, settings: Settings | None = None) -> 
                     mode="100644",
                     type="blob",
                     content=solution_content,
+                )
+            )
+
+    if curriculum_state:
+        state_path = "state/curriculum_progress.json"
+        state_content = _ensure_newline(json.dumps(curriculum_state, indent=2))
+        paths.append(state_path)
+        if not _content_matches(repo, state_path, state_content, branch):
+            tree_elements.append(
+                InputGitTreeElement(
+                    path=state_path,
+                    mode="100644",
+                    type="blob",
+                    content=state_content,
                 )
             )
 
