@@ -414,6 +414,7 @@ async def put_cfg(body: SettingsUpdate, _auth=Depends(require_auth)):
     get_settings.cache_clear()
     return await get_cfg()
 
+from functools import lru_cache
 import time
 from datetime import datetime, timedelta, timezone
 
