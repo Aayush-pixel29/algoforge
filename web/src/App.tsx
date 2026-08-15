@@ -12,7 +12,7 @@ export default function App() {
     <div className="shell">
       <aside className="nav">
         <div className="brand">
-          <Zap size={24} color="var(--amber)" fill="var(--amber)" />
+          <Zap size={22} color="#fff" fill="#fff" />
           ALGOFORGE
         </div>
         <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>

@@ -31,7 +31,7 @@ def send_daily_reminder(result: ForgeResult, settings: Settings) -> None:
             f"The Master Agent has written optimal solutions in both Java and Python, "
             f"and explained the real-world company patterns.\n\n"
             f"Open your Study Deck to review it and maintain your streak:\n"
-            f"http://localhost:5173/study/{result.problem.slug_folder}\n\n"
+            f"{settings.frontend_url}/study/{result.problem.slug_folder}\n\n"
             f"Happy forging!"
         )
         msg.attach(MIMEText(body, "plain"))

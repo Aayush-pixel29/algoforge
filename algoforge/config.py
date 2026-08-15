@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     dry_run: bool = Field(default=False, alias="DRY_RUN")
     output_dir: Path = Field(default=OUTPUT_DIR)
     interview_date: str = Field(default="", alias="INTERVIEW_DATE")
+    frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
     target_companies: list[str] = Field(
         default=["Google", "Amazon", "Microsoft", "Meta", "Flipkart", "Adobe"],
         alias="TARGET_COMPANIES"

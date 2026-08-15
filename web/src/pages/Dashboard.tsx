@@ -37,14 +37,9 @@ export default function Dashboard() {
 
   return (
     <div className="grid">
-      <div>
+      <div className="page-header">
         <h1 style={{ margin: "0 0 0.25rem" }}>Mission Control</h1>
-        <p className="muted">Fetch today's challenge, forge with Gemini, push streak.</p>
-      </div>
-
-      <div className="grid cols-2" style={{ gap: "1rem", marginBottom: "1rem", gridTemplateColumns: "2fr 1fr" }}>
-        <StreakHeatmap />
-        <InterviewCountdown />
+        <p className="muted">Overview / Good Morning! Keep forging your path.</p>
       </div>
 
       {healthLoading ? (
@@ -52,54 +47,105 @@ export default function Dashboard() {
       ) : (
         <div className="grid cols-3">
           <div className="card">
-            <h3>Ollama</h3>
-            <span className={`pill ${health?.ollama ? "ok" : "bad"}`}>
-              {health?.ollama ? "online" : "offline"}
-            </span>
-            <p className="muted mono" style={{ fontSize: "0.8rem", marginTop: "0.5rem" }}>
-              {health?.llm || "—"}
-            </p>
+            <div className="card-header">
+              <h3><span className="card-icon">🤖</span> Ollama Instance</h3>
+              <span className={`status-indicator ${health?.ollama ? "ok" : "bad"}`}></span>
+            </div>
+            <div className="status-row">
+              <span className="status-label">Status</span>
+              <span className={`status-value ${health?.ollama ? "ok" : "bad"}`}>
+                {health?.ollama ? "Online" : "Offline"}
+              </span>
+            </div>
+            <div className="status-row">
+              <span className="status-label">Model</span>
+              <span className="status-value">{health?.llm || "—"}</span>
+            </div>
           </div>
           <div className="card">
-            <h3>GitHub</h3>
-            <span className={`pill ${health?.github_token ? "ok" : "bad"}`}>
-              {health?.github_token ? "token set" : "no token"}
-            </span>
-            <p className="muted" style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>
-              {health?.github_repo || "—"}
-            </p>
+            <div className="card-header">
+              <h3><span className="card-icon">💻</span> GitHub Integration</h3>
+              <span className={`status-indicator ${health?.github_token ? "ok" : "bad"}`}></span>
+            </div>
+            <div className="status-row">
+              <span className="status-label">Status</span>
+              <span className={`status-value ${health?.github_token ? "ok" : "bad"}`}>
+                {health?.github_token ? "Synced" : "No token"}
+              </span>
+            </div>
+            <div className="status-row">
+              <span className="status-label">Repo</span>
+              <span className="status-value">{health?.github_repo || "—"}</span>
+            </div>
           </div>
           <div className="card">
-            <h3>Learner</h3>
-            <p style={{ margin: 0 }}>@{health?.leetcode_username || "—"}</p>
+            <div className="card-header">
+              <h3><span className="card-icon">🧑‍💻</span> Learner API</h3>
+              <span className="status-indicator ok"></span>
+            </div>
+            <div className="status-row">
+              <span className="status-label">User</span>
+              <span className="status-value">@{health?.leetcode_username || "—"}</span>
+            </div>
+            <div className="status-row">
+              <span className="status-label">Dry Run</span>
+              <span className="status-value">{health?.dry_run ? "Enabled" : "Disabled"}</span>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="row">
-        <button className="primary" onClick={scout} disabled={loading}>
-          {loading ? "Scouting…" : "Scout daily"}
-        </button>
-        <Link to="/forge"><button className="primary">Forge today</button></Link>
+      <div className="grid cols-2" style={{ marginTop: "0.5rem" }}>
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <h3 style={{ marginBottom: "1.5rem" }}>Commit Activity</h3>
+          <StreakHeatmap />
+        </div>
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <h3 style={{ marginBottom: "1.5rem" }}>Interview Countdown</h3>
+          <InterviewCountdown />
+        </div>
       </div>
 
-      {err && <p style={{ color: "var(--red)" }}>{err}</p>}
+      {err && <div className="card" style={{ marginTop: "1.5rem", borderColor: "var(--red)" }}><p style={{ color: "var(--red)" }}>{err}</p></div>}
 
-      {problem && (
-        <div className="card">
-          <div className="row" style={{ marginBottom: "0.5rem" }}>
-            <strong>{problem.problem_id}. {problem.title}</strong>
-            <span className={`pill ${problem.difficulty}`}>{problem.difficulty}</span>
-          </div>
-          <p className="muted" style={{ fontSize: "0.9rem" }}>
-            {problem.topics.join(" · ")}
-          </p>
-          <p style={{ maxHeight: 160, overflow: "auto", fontSize: "0.9rem" }}>
-            {problem.description_text.slice(0, 600)}…
-          </p>
-          <a href={problem.url} target="_blank" rel="noreferrer">Open on LeetCode</a>
+      <div className="card problem-card">
+        <div className="card-header" style={{ marginBottom: "0.5rem" }}>
+          <h3><span className="card-icon">⚡</span> Daily Challenge Scout</h3>
         </div>
-      )}
+        
+        {!problem ? (
+          <div className="problem-actions">
+            <button className="primary" onClick={scout} disabled={loading}>
+              {loading ? "Scouting network..." : "Scout today's challenge"}
+            </button>
+            <Link to="/forge" style={{ flex: 1, display: "flex" }}>
+              <button className="primary" style={{ width: "100%", background: "var(--bg-surface-2)", color: "var(--text)" }}>Forge manually</button>
+            </Link>
+          </div>
+        ) : (
+          <>
+            <h2>{problem.problem_id}. {problem.title}</h2>
+            <div className="meta">
+              <span className={`pill ${problem.difficulty}`}>{problem.difficulty}</span>
+              <span>Acceptance: {problem.acceptance_rate || "N/A"}</span>
+            </div>
+            <p className="desc">{problem.description_text.slice(0, 300)}...</p>
+            
+            <div className="row">
+              {problem.topics.map(t => <span key={t} className="pill" style={{ background: "var(--bg-surface-2)", color: "var(--text)", borderColor: "var(--line)" }}>{t}</span>)}
+            </div>
+
+            <div className="problem-actions">
+              <button className="primary" style={{ background: "var(--bg-surface-2)", color: "var(--text)" }} onClick={scout} disabled={loading}>
+                 {loading ? "Scouting…" : "Scout different"}
+              </button>
+              <Link to="/forge" style={{ flex: 1, display: "flex" }}>
+                <button className="primary" style={{ width: "100%" }}>Forge this challenge</button>
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
