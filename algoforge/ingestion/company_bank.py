@@ -5,14 +5,15 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.request import urlopen, Request
-from urllib.error import URLError
+import requests
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 log = logging.getLogger(__name__)
 
 RAW_BASE = "https://raw.githubusercontent.com/liquidslr/leetcode-company-wise-problems/main/companies"
 CACHE_DIR = Path(".cache/company")
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def fetch_company_list(company: str, window: str = "3. Three Months") -> list[dict]:
     """
     Downloads the company-wise CSV, caches to .cache/company/{company}_{window}.csv (24h TTL).
@@ -39,9 +40,9 @@ def fetch_company_list(company: str, window: str = "3. Three Months") -> list[di
     log.info(f"Fetching company bank for {company} from {url}")
     
     try:
-        req = Request(url)
-        with urlopen(req, timeout=10) as response:
-            content = response.read().decode("utf-8")
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        content = response.text
         
         reader = csv.DictReader(content.splitlines())
         problems = []
@@ -60,6 +61,6 @@ def fetch_company_list(company: str, window: str = "3. Three Months") -> list[di
             json.dump(problems, f)
             
         return problems
-    except URLError as e:
+    except Exception as e:
         log.error(f"Failed to fetch company list for {company}: {e}")
         return []

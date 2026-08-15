@@ -10,6 +10,8 @@ from urllib.request import urlopen, Request
 from algoforge.config import Settings
 from algoforge.curriculum import CURRICULUM
 from algoforge.ingestion.company_bank import fetch_company_list
+import requests
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class PickResult:
     source: str
     slug_or_ids: dict
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def pick_codeforces_problem(tag: str, rating_min: int, rating_max: int, exclude: set[str]) -> tuple[int, str]:
     """
     GET https://codeforces.com/api/problemset.problems
@@ -27,9 +30,9 @@ def pick_codeforces_problem(tag: str, rating_min: int, rating_max: int, exclude:
     url = "https://codeforces.com/api/problemset.problems"
     log.info("Fetching Codeforces problemset...")
     try:
-        req = Request(url)
-        with urlopen(req, timeout=15) as response:
-            data = json.loads(response.read().decode("utf-8"))
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        data = response.json()
         
         if data.get("status") != "OK":
             raise ValueError("Codeforces API returned non-OK status.")

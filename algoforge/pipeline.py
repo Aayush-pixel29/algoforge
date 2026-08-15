@@ -58,7 +58,7 @@ def run_pipeline(
         else:  # company
             problem = fetch_problem_by_slug(pick.slug_or_ids["slug"], settings=settings)
             if state:
-                state["leetcode_company_solved"].append(problem.problem_id)
+                state["leetcode_company_solved"].append(problem.title_slug)
                 
         # Advance curriculum if day threshold met
         if state:
