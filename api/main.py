@@ -154,10 +154,25 @@ class SettingsUpdate(BaseModel):
 
 
 @app.get("/api/scout")
-async def scout(slug: str | None = None):
+async def scout(slug: str | None = None, random: bool = False):
     s = get_settings()
     slug = sanitize_slug(slug)
     try:
+        if random:
+            from algoforge.ingestion.company_bank import fetch_company_list
+            import random as rand
+            companies = s.target_companies or ["Google", "Meta", "Amazon"]
+            target_company = rand.choice(companies)
+            problems = await asyncio.to_thread(fetch_company_list, target_company)
+            slugs = []
+            for p in problems:
+                url = p.get("url", "")
+                if url and "leetcode.com/problems/" in url:
+                    extracted = url.split("leetcode.com/problems/")[1].strip("/")
+                    slugs.append(extracted)
+            if slugs:
+                slug = rand.choice(slugs)
+
         if slug:
             problem = await asyncio.to_thread(fetch_problem_by_slug, slug, s)
             profile = None

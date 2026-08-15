@@ -22,11 +22,11 @@ export default function Dashboard() {
     return () => controller.abort();
   }, []);
 
-  async function scout() {
+  async function scout(isRandom: boolean = false) {
     setLoading(true);
     setErr("");
     try {
-      const data = await api<{ problem: Problem }>("/api/scout");
+      const data = await api<{ problem: Problem }>(`/api/scout${isRandom ? "?random=true" : ""}`);
       setProblem(data.problem);
     } catch (e) {
       setErr(String(e));
@@ -115,7 +115,7 @@ export default function Dashboard() {
         
         {!problem ? (
           <div className="problem-actions">
-            <button className="primary" onClick={scout} disabled={loading}>
+            <button className="primary" onClick={() => scout(false)} disabled={loading}>
               {loading ? "Scouting network..." : "Scout today's challenge"}
             </button>
             <Link to="/forge" style={{ flex: 1, display: "flex" }}>
@@ -136,7 +136,7 @@ export default function Dashboard() {
             </div>
 
             <div className="problem-actions">
-              <button className="primary" style={{ background: "var(--bg-surface-2)", color: "var(--text)" }} onClick={scout} disabled={loading}>
+              <button className="primary" style={{ background: "var(--bg-surface-2)", color: "var(--text)" }} onClick={() => scout(true)} disabled={loading}>
                  {loading ? "Scouting…" : "Scout different"}
               </button>
               <Link to="/forge" style={{ flex: 1, display: "flex" }}>

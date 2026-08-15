@@ -33,6 +33,7 @@ export type Problem = {
   description_text: string;
   slug_folder: string;
   title_slug: string;
+  acceptance_rate?: string;
 };
 
 export type StreakData = {
